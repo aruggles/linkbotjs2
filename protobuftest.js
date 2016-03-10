@@ -7,6 +7,7 @@ var daemon_obj = builder.build('barobo.Daemon');
 
 var rb = new RB.RibbonBridge(daemon_obj);
 rb.connect('ws://localhost:42000/', function() {
+        console.log('Calling resolveSerialId...');
         rb.resolveSerialId({'serialId':{'value':'DGKR'}}, function(obj) { 
             console.log(obj);
         })

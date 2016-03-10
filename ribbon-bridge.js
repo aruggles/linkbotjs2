@@ -48,12 +48,12 @@ var RibbonBridge = function(protobufObj) {
                 (serverMessage.type == barobo.rpc.ServerMessage.Type.REPLY) 
                 ) 
             {
-                if(serverMessage.reply.type == barobo.rpc.Reply.RESULT) {
-                    console.log('Got reply result.');
+                if(serverMessage.reply.type == barobo.rpc.Reply.Type.RESULT) {
                     if (_replyHandlers[serverMessage.inReplyTo]['name'] != null) {
-                        result = _proxyProtoBuf[_replyHandlers[serverMessage.inReplyTo]['name']]['Result']();
-                        result.decode(serverMessage.reply.result.payload);
-                        _replyHandlers[serverMessage.inReplyTo]['cb'](result);
+                        var name = _replyHandlers[serverMessage.inReplyTo]['name'];
+                        result = _proxyProtoBuf[name]['Result'];
+                        result_obj = result.decode(serverMessage.reply.result.payload);
+                        _replyHandlers[serverMessage.inReplyTo]['cb'](result_obj);
                     } else {
                         _replyHandlers[serverMessage.inReplyTo]['cb'](
                             serverMessage.reply.result.payload );
@@ -85,6 +85,7 @@ var RibbonBridge = function(protobufObj) {
                 console.log('Sending rpc handshake...');
                 connection.sendBytes(connect_msg.toBuffer());
                 _connection = connection;
+                _msgId += 1;
             }
         }
         handshake();
