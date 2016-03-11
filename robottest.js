@@ -1,4 +1,4 @@
-robot = require('./robot.js');
+robot = require('./robotimpl.js');
 async = require('async');
 
 async.waterfall([
