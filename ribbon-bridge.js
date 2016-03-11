@@ -39,11 +39,7 @@ var RibbonBridge = function(protobufObj) {
             console.log('WS Connection error: ' + error.toString());
         });
         connection.on('message', function(message) {
-            console.log('Received message from remote host.');
             serverMessage = barobo.rpc.ServerMessage.decode(message.binaryData);
-            console.log(serverMessage);
-            console.log(serverMessage.type);
-            console.log(_callbacks);
             if(
                 (serverMessage.type == barobo.rpc.ServerMessage.Type.REPLY) 
                 ) 
@@ -60,9 +56,7 @@ var RibbonBridge = function(protobufObj) {
                     }
                     delete _replyHandlers[serverMessage.inReplyTo];
                 } else if (serverMessage.reply.type == barobo.rpc.Reply.Type.VERSIONS) {
-                    console.log('Checking connect callback...');
                     if(_callbacks.hasOwnProperty('connect')) {
-                        console.log('Calling connect callback...');
                         _callbacks['connect']();
                     }
                 }
