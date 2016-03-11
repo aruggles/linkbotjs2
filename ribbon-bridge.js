@@ -39,6 +39,7 @@ var RibbonBridge = function(protobufObj) {
             console.log('WS Connection error: ' + error.toString());
         });
         connection.on('message', function(message) {
+            console.log('ribbon-bridge received message.');
             serverMessage = barobo.rpc.ServerMessage.decode(message.binaryData);
             if(
                 (serverMessage.type == barobo.rpc.ServerMessage.Type.REPLY) 
@@ -49,15 +50,18 @@ var RibbonBridge = function(protobufObj) {
                         var name = _replyHandlers[serverMessage.inReplyTo]['name'];
                         result = _proxyProtoBuf[name]['Result'];
                         result_obj = result.decode(serverMessage.reply.result.payload);
-                        _replyHandlers[serverMessage.inReplyTo]['cb'](result_obj);
+                        _replyHandlers[serverMessage.inReplyTo]['cb'](null, result_obj);
                     } else {
                         _replyHandlers[serverMessage.inReplyTo]['cb'](
-                            serverMessage.reply.result.payload );
+                            null, serverMessage.reply.result.payload );
                     }
                     delete _replyHandlers[serverMessage.inReplyTo];
                 } else if (serverMessage.reply.type == barobo.rpc.Reply.Type.VERSIONS) {
+                    console.log('Received versions message');
+                    console.log(_callbacks);
                     if(_callbacks.hasOwnProperty('connect')) {
-                        _callbacks['connect']();
+                        console.log('Calling connect callback...');
+                        _callbacks['connect'](null);
                     }
                 }
             }
@@ -86,11 +90,14 @@ var RibbonBridge = function(protobufObj) {
     });
 
     this.connect = function(uri, callback) {
+        console.log('Ribbon bridge connecting to: ' + uri);
         _callbacks['connect'] = callback;
+        console.log(_callbacks);
         ws_client.connect(uri, null);
     }
 
     this.fire = function(rpcName, payload, callback) {
+        console.log('Fire: ' + rpcName);
         fire_msg = new barobo.rpc.ClientMessage({
             'id':_msgId,
             'request': {
@@ -135,7 +142,7 @@ var RibbonBridge = function(protobufObj) {
             }
         }
     })(protobufObj, this);
-
+    return this;
 }
 
 var loadProtoFile = function(filename) {

@@ -1,4 +1,3 @@
-
 var ProtoBuf = require('protobufjs');
 var RibbonBridge = require('./ribbon-bridge.js');
 
@@ -9,8 +8,8 @@ var connect = (function() {
 
     return function(uri, completion_callback) {
         proxy.connect(uri, 
-            function(reply) {
-                completion_callback(proxy);
+            function(err, reply) {
+                completion_callback(err, proxy);
             });
         return proxy;
     };
