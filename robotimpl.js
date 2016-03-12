@@ -3,15 +3,50 @@ var RibbonBridge = require('./ribbon-bridge.js');
 var daemon_module = require('./daemon.js');
 var async = require('async');
 var util = require('./util.js');
+const assert = require('assert');
 
-var connect = (function() {
+var RobotImpl = function() {
+    var self = this;
     var DAEMON_TIMEOUT = 5000;
     var ROBOT_TIMEOUT = 10000;
 
     var builder = ProtoBuf.loadProtoFile('proto/robot.proto');
     var robot_pb = builder.build('barobo.Robot');
 
-    return function(uri, serialId, callback) {
+    var _rpcBroadcastNames = [
+        'buttonEvent',
+        'encoderEvent',
+        'accelerometerEvent',
+        'jointEvent',
+        'debugMessageEvent',
+        'connectionTerminated',
+    ];
+
+    var _rpcHashMap = {};
+    for(var i = 0; i <  _rpcBroadcastNames.length; i++) {
+        var name = _rpcBroadcastNames[i];
+        _rpcHashMap[RibbonBridge.hash(name)] = name;
+    }
+
+    var _broadcastCallbacks = {};
+
+    var _broadcastHandler = function(bcast) {
+        console.log(_rpcHashMap);
+        console.log(bcast);
+        assert(_rpcHashMap.hasOwnProperty(bcast.id));
+        var name = _rpcHashMap[bcast.id];
+        if(!(name in _broadcastCallbacks)) {
+            return;
+        }
+        bcast_obj = robot_pb[name].decode(bcast.payload);
+        _broadcastCallbacks[name](bcast_obj);
+    }
+
+    this.on = function(name, callback) {
+        _broadcastCallbacks[name] = callback;
+    }
+
+    this.connect = function(uri, serialId, callback) {
         async.waterfall([
             util.timeout(function(callback_) {
                 // Connect to the daemon
@@ -36,10 +71,17 @@ var connect = (function() {
                     callback_(null, proxy);
                 });
             }, ROBOT_TIMEOUT),
+            function(proxy, callback_) {
+                // Register our broadcast handler
+                proxy.on('broadcast', _broadcastHandler);
+                callback_(null, proxy);
+            }
         ], function(err, result) {
-            callback(err, result);
+            self.proxy = result;
+            callback(err, self);
         });
+        return self;
     };
-})();
+}
 
-module.exports.connect = connect;
+module.exports.RobotImpl = RobotImpl;
