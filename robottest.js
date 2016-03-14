@@ -1,4 +1,4 @@
-robotimpl = require('./robotimpl.js');
+robotimpl = require('./src/robotimpl.js');
 async = require('async');
 
 var robot = new robotimpl.RobotImpl();

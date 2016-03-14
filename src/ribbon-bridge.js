@@ -1,5 +1,3 @@
-var pb = require("protobufjs");
-var WebSocketClient = require("websocket").client;
 const assert = require('assert');
 
 // hash function
@@ -14,6 +12,9 @@ var hash = function(string) {
 }
 
 var RibbonBridge = function(protobufObj) {
+    var pb = require("protobufjs");
+    var WebSocketClient = require("websocket").client;
+
     var _msgId = 10;
     var _replyHandlers = {};
     var _connection = null;
