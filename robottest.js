@@ -2,7 +2,18 @@ robotimpl = require('./robotimpl.js');
 async = require('async');
 
 var robot = new robotimpl.RobotImpl();
+var a = 90*3.14/180;
+async.series([
+    async.apply(robot.connect, 'ws://localhost:42000', 'DGKR'),
+    async.apply(robot.move, a, a, a, 0x07),
+    async.apply(robot.moveWait, 0x07),
+    function(callback) {
+        console.log('moveWait done.');
+        callback(null);
+    },
+]);
 
+/*
 var buttonEvent = function() {
     console.log('Button event!');
     console.log(arguments);
@@ -32,3 +43,4 @@ async.waterfall([
             console.log('Error controlling robot: '+err);
         }
 });
+*/

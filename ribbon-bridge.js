@@ -43,7 +43,6 @@ var RibbonBridge = function(protobufObj) {
         connection.on('message', function(message) {
             console.log('ribbon-bridge received message.');
             serverMessage = barobo.rpc.ServerMessage.decode(message.binaryData);
-            console.log(serverMessage);
             if(
                 (serverMessage.type == barobo.rpc.ServerMessage.Type.REPLY) 
                 ) 
@@ -60,16 +59,11 @@ var RibbonBridge = function(protobufObj) {
                     }
                     delete _replyHandlers[serverMessage.inReplyTo];
                 } else if (serverMessage.reply.type == barobo.rpc.Reply.Type.VERSIONS) {
-                    console.log('Received versions message');
-                    console.log(_callbacks);
                     if(_callbacks.hasOwnProperty('connect')) {
-                        console.log('Calling connect callback...');
                         _callbacks['connect'](null);
                     }
                 }
             } else if (serverMessage.type == barobo.rpc.ServerMessage.Type.BROADCAST) {
-                console.log('ribbon-bridge received broadcast');
-                console.log(_callbacks.hasOwnProperty('broadcast'));
                 if(_callbacks.hasOwnProperty('broadcast')) {
                     _callbacks['broadcast'](serverMessage.broadcast);
                 }
@@ -89,7 +83,6 @@ var RibbonBridge = function(protobufObj) {
                     'name':null, 
                     'cb': (function(obj) {}),
                 };
-                console.log('Sending rpc handshake...');
                 connection.sendBytes(connect_msg.toBuffer());
                 _connection = connection;
                 _msgId += 1;
@@ -99,9 +92,7 @@ var RibbonBridge = function(protobufObj) {
     });
 
     this.connect = function(uri, callback) {
-        console.log('Ribbon bridge connecting to: ' + uri);
         _callbacks['connect'] = callback;
-        console.log(_callbacks);
         ws_client.connect(uri, null);
     }
 
@@ -123,9 +114,6 @@ var RibbonBridge = function(protobufObj) {
     }
 
     this.on = function(event_name, callback) {
-        console.log(event_name);
-        console.log(_valid_callbacks);
-        console.log( _valid_callbacks.indexOf(event_name) );
         assert( _valid_callbacks.indexOf(event_name) >= 0 );
         _callbacks[event_name] = callback;
     }
