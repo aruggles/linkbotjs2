@@ -46,6 +46,7 @@ var RobotImpl = function() {
     self._jointsMovingMask = 0;
     self._motorMask = 0x07;
     self._moveWaitCallbacks = [];
+    self._moveWaitTimer = null;
 
     self.on = function(name, callback) {
         _broadcastCallbacks[name] = callback;
@@ -95,9 +96,11 @@ var RobotImpl = function() {
                 proxy.connect('ws://'+host+':'+port, function(reply) {
                     callback_(null, proxy);
                 });
+                console.log('Connection in progress... waiting on callback.');
             }, ROBOT_TIMEOUT),
-            function(proxy, callback_) {
+            util.timeout(function(proxy, callback_) {
                 // Get our form factor
+                console.log('Getting form factor...');
                 proxy.getFormFactor({}, function(err, result) {
                     var f = result.value;
                     if(f == 0) {
@@ -115,8 +118,8 @@ var RobotImpl = function() {
                     }
                     callback_(err, proxy);
                 });
-            },
-            function(proxy, callback_) {
+            }, ROBOT_TIMEOUT),
+            util.timeout(function(proxy, callback_) {
                 // Register our broadcast handler
                 proxy.on('broadcast', _broadcastHandler);
                 // Register our own joint-event handler
@@ -124,13 +127,24 @@ var RobotImpl = function() {
                 proxy.enableJointEvent({'enable':true}, function(err, result) {
                     callback_(err, proxy);
                 });
-            }
+            }, ROBOT_TIMEOUT),
         ], function(err, result) {
-            self.proxy = result;
+            if(!err) {
+                self.proxy = result;
+            }
             callback(err, self);
         });
         return self;
     };
+
+    self.getJointAngles = function(callback) {
+        util.timeout(self.proxy.getEncoderValues({}, function(err, result) {
+            if(err) { callback(err); }
+            else {
+                callback(null, result.values);
+            }
+        }), ROBOT_TIMEOUT);
+    }
 
     self.move = function(a1, a2, a3, mask, callback) {
         move_obj = {};
@@ -156,6 +170,30 @@ var RobotImpl = function() {
         util.timeout(self.proxy.move(move_obj, callback), ROBOT_TIMEOUT);
     }
 
+    self.moveTo = function(a1, a2, a3, mask, callback) {
+        move_obj = {};
+        if(mask & 0x01) {
+            move_obj.motorOneGoal = 
+                { 'type': robot_pb.Goal.Type.ABSOLUTE,
+                  'goal': a1,
+                };
+        }
+        if(mask & 0x02) {
+            move_obj.motorTwoGoal = 
+                { 'type': robot_pb.Goal.Type.ABSOLUTE,
+                  'goal': a2,
+                };
+        }
+        if(mask & 0x04) {
+            move_obj.motorThreeGoal = 
+                { 'type': robot_pb.Goal.Type.ABSOLUTE,
+                  'goal': a3,
+                };
+        }
+        self._jointsMovingMask = mask&self._motorMask;
+        util.timeout(self.proxy.move(move_obj, callback), ROBOT_TIMEOUT);
+    }
+
     self.moveWait = function(mask, callback) {
         mask = mask & self._motorMask;
         // If the joint is not moving, call the callback immediately.
@@ -165,6 +203,13 @@ var RobotImpl = function() {
             // Add the callback to our move_wait callbacks
             self._moveWaitCallbacks.push( {'mask':mask, 'callback':callback} );
         }
+    }
+
+    self.setBuzzerFrequency = function(frequency, callback) {
+        util.timeout(
+            self.proxy.setBuzzerFrequency({'value':frequency}, callback),
+            ROBOT_TIMEOUT
+        );
     }
 }
 

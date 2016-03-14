@@ -11,7 +11,23 @@ async.series([
         console.log('moveWait done.');
         callback(null);
     },
-]);
+    async.apply(robot.setBuzzerFrequency, 440),
+    function(callback) {
+        setTimeout(callback, 1000, null, null);
+    },
+    async.apply(robot.setBuzzerFrequency, 0),
+    function(callback) {
+        robot.getJointAngles(function(err, result) {
+            if(err) { callback(err); return; }
+            console.log('Current motor angles: ');
+            console.log(result);
+        });
+    }
+], function(err, results) {
+    if(err) {
+        console.log(err);
+    }
+});
 
 /*
 var buttonEvent = function() {
