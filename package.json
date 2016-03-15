@@ -1,0 +1,11 @@
+{
+    "name": "linkbot-js",
+    "version": "0.0.1",
+    "devDependencies": {
+        "grunt": "~0.4.5",
+        "browserify": "latest",
+        "grunt-browserify": "~5.0.0",
+        "grunt-contrib-watch":"latest",
+        "websocket":"latest"
+    }
+}

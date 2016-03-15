@@ -214,3 +214,4 @@ var RobotImpl = function() {
 }
 
 module.exports.RobotImpl = RobotImpl;
+global.RobotImpl = RobotImpl;
