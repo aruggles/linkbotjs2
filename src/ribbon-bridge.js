@@ -31,6 +31,7 @@ var RibbonBridge = function(protobufObj) {
 
     this.connect = function(uri, callback) {
         self.ws_client = new WebSocketClient(uri);
+        self.ws_client.binaryType = "arraybuffer";
         self.ws_client.onopen = function() {
             function handshake() {
                 // Send ribbon-bridge connect message
