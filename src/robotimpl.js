@@ -43,31 +43,30 @@ var RobotImpl = function() {
         _broadcastCallbacks[name](bcast_obj);
     }
 
-    self._jointsMovingMask = 0;
-    self._motorMask = 0x07;
-    self._moveWaitCallbacks = [];
-    self._moveWaitTimer = null;
+    var _jointsMovingMask = 0;
+    var _motorMask = 0x07;
+    var _moveWaitCallbacks = [];
 
     self.on = function(name, callback) {
         _broadcastCallbacks[name] = callback;
     }
 
-    self._onJointEvent = function(payload) {
+    var _onJointEvent = function(payload) {
         console.log('Received joint event:');
-        console.log(self._jointsMovingMask);
+        console.log(_jointsMovingMask);
         if( 
               (payload.event == robot_pb.JointState.COAST) ||
               (payload.event == robot_pb.JointState.HOLD)
           )
         {
-            self._jointsMovingMask &= ~(1<<payload.joint);
+            _jointsMovingMask &= ~(1<<payload.joint);
         }
-        var i = self._moveWaitCallbacks.length;
+        var i = _moveWaitCallbacks.length;
         while(i--) {
-            item = self._moveWaitCallbacks[i];
-            if( 0 == (item.mask & self._jointsMovingMask) ) {
+            item = _moveWaitCallbacks[i];
+            if( 0 == (item.mask & _jointsMovingMask) ) {
                 item.callback(null)
-                self._moveWaitCallbacks.splice(i, 1);
+                _moveWaitCallbacks.splice(i, 1);
             }
         }
     }
@@ -105,16 +104,16 @@ var RobotImpl = function() {
                     var f = result.value;
                     if(f == 0) {
                         // I
-                        self._motorMask = 0x05;
+                        _motorMask = 0x05;
                     } else if (f == 1) {
                         // L
-                        self._motorMask = 0x03;
+                        _motorMask = 0x03;
                     } else if (f == 2) {
                         // T
-                        self._motorMask = 0x07;
+                        _motorMask = 0x07;
                     } else if (f == 3) {
                         // Dongle
-                        self._motorMask = 0;
+                        _motorMask = 0;
                     }
                     callback_(err, proxy);
                 });
@@ -123,7 +122,7 @@ var RobotImpl = function() {
                 // Register our broadcast handler
                 proxy.on('broadcast', _broadcastHandler);
                 // Register our own joint-event handler
-                self.on('jointEvent', self._onJointEvent);
+                self.on('jointEvent', _onJointEvent);
                 proxy.enableJointEvent({'enable':true}, function(err, result) {
                     callback_(err, proxy);
                 });
@@ -166,7 +165,7 @@ var RobotImpl = function() {
                   'goal': a3,
                 };
         }
-        self._jointsMovingMask = mask&self._motorMask;
+        _jointsMovingMask = mask&_motorMask;
         util.timeout(self.proxy.move(move_obj, callback), ROBOT_TIMEOUT);
     }
 
@@ -190,18 +189,18 @@ var RobotImpl = function() {
                   'goal': a3,
                 };
         }
-        self._jointsMovingMask = mask&self._motorMask;
+        _jointsMovingMask = mask&_motorMask;
         util.timeout(self.proxy.move(move_obj, callback), ROBOT_TIMEOUT);
     }
 
     self.moveWait = function(mask, callback) {
-        mask = mask & self._motorMask;
+        mask = mask & _motorMask;
         // If the joint is not moving, call the callback immediately.
-        if( 0 == (mask & self._jointsMovingMask) ) {
+        if( 0 == (mask & _jointsMovingMask) ) {
             async.setImmediate(callback, null);
         } else {
             // Add the callback to our move_wait callbacks
-            self._moveWaitCallbacks.push( {'mask':mask, 'callback':callback} );
+            _moveWaitCallbacks.push( {'mask':mask, 'callback':callback} );
         }
     }
 
