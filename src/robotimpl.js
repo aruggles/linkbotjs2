@@ -71,144 +71,171 @@ var RobotImpl = function() {
         }
     }
 
-    self.connect = function(uri, serialId, callback) {
-        async.waterfall([
-            util.timeout(function(callback_) {
-                // Connect to the daemon
-                console.log('Connecting to daemon...');
-                daemon_module.connect(uri, callback_);
-            }, DAEMON_TIMEOUT),
-            util.timeout(function(daemon, callback_) {
-                // Resolve the serial ID of the robot
-                console.log('Resolving serial ID...');
-                daemon.resolveSerialId(
-                    {'serialId':{'value':serialId}},
-                    function(err, reply) {
-                        callback_(err, reply.endpoint.address, reply.endpoint.port);
-                    }
-                );
-            }, DAEMON_TIMEOUT),
-            util.timeout(function(host, port, callback_) {
-                // Connect to the robot
-                console.log('Connecting to robot...');
-                var proxy = new RibbonBridge.RibbonBridge(robot_pb);
-                proxy.connect('ws://'+host+':'+port, function(reply) {
-                    callback_(null, proxy);
-                });
-                console.log('Connection in progress... waiting on callback.');
-            }, ROBOT_TIMEOUT),
-            util.timeout(function(proxy, callback_) {
-                // Get our form factor
-                console.log('Getting form factor...');
-                proxy.getFormFactor({}, function(err, result) {
-                    var f = result.value;
-                    if(f == 0) {
-                        // I
-                        _motorMask = 0x05;
-                    } else if (f == 1) {
-                        // L
-                        _motorMask = 0x03;
-                    } else if (f == 2) {
-                        // T
-                        _motorMask = 0x07;
-                    } else if (f == 3) {
-                        // Dongle
-                        _motorMask = 0;
-                    }
-                    callback_(err, proxy);
-                });
-            }, ROBOT_TIMEOUT),
-            util.timeout(function(proxy, callback_) {
-                // Register our broadcast handler
-                proxy.on('broadcast', _broadcastHandler);
-                // Register our own joint-event handler
-                self.on('jointEvent', _onJointEvent);
-                proxy.enableJointEvent({'enable':true}, function(err, result) {
-                    callback_(err, proxy);
-                });
-            }, ROBOT_TIMEOUT),
-        ], function(err, result) {
-            if(!err) {
-                self.proxy = result;
-            }
-            callback(err, self);
+    self.connect = function(uri, serialId) {
+        return new Promise(function(resolve, reject) {
+            async.waterfall([
+                util.timeout(function(callback_) {
+                    // Connect to the daemon
+                    console.log('Connecting to daemon...');
+                    daemon_module.connect(uri, callback_);
+                }, DAEMON_TIMEOUT),
+                util.timeout(function(daemon, callback_) {
+                    // Resolve the serial ID of the robot
+                    console.log('Resolving serial ID...');
+                    daemon.resolveSerialId(
+                        {'serialId':{'value':serialId}},
+                        function(err, reply) {
+                            callback_(err, reply.endpoint.address, reply.endpoint.port);
+                        }
+                    );
+                }, DAEMON_TIMEOUT),
+                util.timeout(function(host, port, callback_) {
+                    // Connect to the robot
+                    console.log('Connecting to robot...');
+                    var proxy = new RibbonBridge.RibbonBridge(robot_pb);
+                    proxy.connect('ws://'+host+':'+port, function(reply) {
+                        callback_(null, proxy);
+                    });
+                    console.log('Connection in progress... waiting on callback.');
+                }, ROBOT_TIMEOUT),
+                util.timeout(function(proxy, callback_) {
+                    // Get our form factor
+                    console.log('Getting form factor...');
+                    proxy.getFormFactor({}, function(err, result) {
+                        var f = result.value;
+                        if(f == 0) {
+                            // I
+                            _motorMask = 0x05;
+                        } else if (f == 1) {
+                            // L
+                            _motorMask = 0x03;
+                        } else if (f == 2) {
+                            // T
+                            _motorMask = 0x07;
+                        } else if (f == 3) {
+                            // Dongle
+                            _motorMask = 0;
+                        }
+                        callback_(err, proxy);
+                    });
+                }, ROBOT_TIMEOUT),
+                util.timeout(function(proxy, callback_) {
+                    // Register our broadcast handler
+                    proxy.on('broadcast', _broadcastHandler);
+                    // Register our own joint-event handler
+                    self.on('jointEvent', _onJointEvent);
+                    proxy.enableJointEvent({'enable':true}, function(err, result) {
+                        callback_(err, proxy);
+                    });
+                }, ROBOT_TIMEOUT),
+            ], function(err, result) {
+                if(!err) {
+                    self.proxy = result;
+                    resolve(self);
+                } else {
+                    reject(err);
+                }
+            });
         });
-        return self;
     };
 
-    self.getJointAngles = function(callback) {
-        util.timeout(self.proxy.getEncoderValues({}, function(err, result) {
-            if(err) { callback(err); }
-            else {
-                callback(null, result.values);
+    self.getJointAngles = function() {
+        return new Promise(function(resolve, reject) {
+            util.timeout(self.proxy.getEncoderValues({}, function(err, result) {
+                if(err) { reject(err); }
+                else {
+                    resolve(result.values);
+                }
+            }), ROBOT_TIMEOUT);
+        });
+    }
+
+    self.move = function(a1, a2, a3, mask) {
+        return new Promise(function(resolve, reject) {
+            move_obj = {};
+            if(mask & 0x01) {
+                move_obj.motorOneGoal = 
+                    { 'type': robot_pb.Goal.Type.RELATIVE,
+                      'goal': a1,
+                    };
             }
-        }), ROBOT_TIMEOUT);
+            if(mask & 0x02) {
+                move_obj.motorTwoGoal = 
+                    { 'type': robot_pb.Goal.Type.RELATIVE,
+                      'goal': a2,
+                    };
+            }
+            if(mask & 0x04) {
+                move_obj.motorThreeGoal = 
+                    { 'type': robot_pb.Goal.Type.RELATIVE,
+                      'goal': a3,
+                    };
+            }
+            _jointsMovingMask = mask&_motorMask;
+            util.timeout(self.proxy.move(move_obj, function(err, result) {
+                if(err) { reject(err); }
+                else { resolve(result); }
+            }), ROBOT_TIMEOUT);
+        });
     }
 
-    self.move = function(a1, a2, a3, mask, callback) {
-        move_obj = {};
-        if(mask & 0x01) {
-            move_obj.motorOneGoal = 
-                { 'type': robot_pb.Goal.Type.RELATIVE,
-                  'goal': a1,
-                };
-        }
-        if(mask & 0x02) {
-            move_obj.motorTwoGoal = 
-                { 'type': robot_pb.Goal.Type.RELATIVE,
-                  'goal': a2,
-                };
-        }
-        if(mask & 0x04) {
-            move_obj.motorThreeGoal = 
-                { 'type': robot_pb.Goal.Type.RELATIVE,
-                  'goal': a3,
-                };
-        }
-        _jointsMovingMask = mask&_motorMask;
-        util.timeout(self.proxy.move(move_obj, callback), ROBOT_TIMEOUT);
+    self.moveTo = function(a1, a2, a3, mask) {
+        return new Promise(function(resolve, reject) {
+            move_obj = {};
+            if(mask & 0x01) {
+                move_obj.motorOneGoal = 
+                    { 'type': robot_pb.Goal.Type.ABSOLUTE,
+                      'goal': a1,
+                    };
+            }
+            if(mask & 0x02) {
+                move_obj.motorTwoGoal = 
+                    { 'type': robot_pb.Goal.Type.ABSOLUTE,
+                      'goal': a2,
+                    };
+            }
+            if(mask & 0x04) {
+                move_obj.motorThreeGoal = 
+                    { 'type': robot_pb.Goal.Type.ABSOLUTE,
+                      'goal': a3,
+                    };
+            }
+            _jointsMovingMask = mask&_motorMask;
+            util.timeout(self.proxy.move(move_obj, function(err, result) {
+                if(err) { reject(err); }
+                else { resolve(result); }
+            }), ROBOT_TIMEOUT);
+        });
     }
 
-    self.moveTo = function(a1, a2, a3, mask, callback) {
-        move_obj = {};
-        if(mask & 0x01) {
-            move_obj.motorOneGoal = 
-                { 'type': robot_pb.Goal.Type.ABSOLUTE,
-                  'goal': a1,
-                };
-        }
-        if(mask & 0x02) {
-            move_obj.motorTwoGoal = 
-                { 'type': robot_pb.Goal.Type.ABSOLUTE,
-                  'goal': a2,
-                };
-        }
-        if(mask & 0x04) {
-            move_obj.motorThreeGoal = 
-                { 'type': robot_pb.Goal.Type.ABSOLUTE,
-                  'goal': a3,
-                };
-        }
-        _jointsMovingMask = mask&_motorMask;
-        util.timeout(self.proxy.move(move_obj, callback), ROBOT_TIMEOUT);
+    self.moveWait = function(mask) {
+        return new Promise(function(resolve, reject) {
+            mask = mask & _motorMask;
+            // If the joint is not moving, call the callback immediately.
+            if( 0 == (mask & _jointsMovingMask) ) {
+                resolve();
+            } else {
+                // Add the callback to our move_wait callbacks
+                _moveWaitCallbacks.push( 
+                    {'mask':mask, 'callback':function(err, result) 
+                        {
+                            if(err) { reject(err); }
+                            else { resolve(); }
+                        }} );
+            }
+        });
     }
 
-    self.moveWait = function(mask, callback) {
-        mask = mask & _motorMask;
-        // If the joint is not moving, call the callback immediately.
-        if( 0 == (mask & _jointsMovingMask) ) {
-            async.setImmediate(callback, null);
-        } else {
-            // Add the callback to our move_wait callbacks
-            _moveWaitCallbacks.push( {'mask':mask, 'callback':callback} );
-        }
-    }
-
-    self.setBuzzerFrequency = function(frequency, callback) {
-        util.timeout(
-            self.proxy.setBuzzerFrequency({'value':frequency}, callback),
-            ROBOT_TIMEOUT
-        );
+    self.setBuzzerFrequency = function(frequency) {
+        return new Promise(function(resolve, reject) {
+            util.timeout(
+                self.proxy.setBuzzerFrequency({'value':frequency}, function(err, result) {
+                    if(err) { reject(err); }
+                    else { resolve(result); }
+                }),
+                ROBOT_TIMEOUT
+            );
+        });
     }
 }
 

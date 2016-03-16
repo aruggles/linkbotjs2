@@ -3,6 +3,45 @@ async = require('async');
 
 var robot = new robotimpl.RobotImpl();
 var a = 90*3.14/180;
+
+robot.connect('ws://localhost:42000', 'DGKR').then(function() {
+    return robot.move(a,a,a,7)
+}).then(function() {
+    return robot.moveWait(7);
+}).then(function() {
+    return robot.setBuzzerFrequency(440);
+}).then(function() {
+    return new Promise(function(resolve, reject) {
+        setTimeout(resolve, 1000);
+    });
+}).then(function() {
+    return robot.setBuzzerFrequency(0);
+}).then(function() {
+    return robot.getJointAngles();
+}).then(function(values) {
+    console.log("Robot joint angles: ");
+    console.log(values);
+}).catch(function(err) {
+    console.log('Error!');
+    console.log(err);
+});
+
+/*
+.then
+    robot.move(a, a, a, 7)).then(
+    robot.moveWait(7)).then(
+    robot.setBuzzerFrequency(440)).then(function() {
+            return new Promise(function(resolve, reject) {
+                setTimeout(resolve, 1000);
+            });
+        }).then(
+    robot.setBuzzerFrequency(0)).catch(function(err) {
+        console.log('Could not complete robot program:');
+        console.log(err);
+    });
+*/
+
+/*
 async.series([
     async.apply(robot.connect, 'ws://localhost:42000', 'DGKR'),
     async.apply(robot.move, a, a, a, 0x07),
@@ -28,6 +67,8 @@ async.series([
         console.log(err);
     }
 });
+
+*/
 
 /*
 var buttonEvent = function() {
