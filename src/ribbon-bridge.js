@@ -25,14 +25,15 @@ var RibbonBridge = function(protobufObj) {
         'broadcast',
         ];
     var _callbacks = {};
+    var _socket = {};
     // Initialize protobuf
     builder = pb.loadProtoFile('proto/rpc.proto');
     barobo = builder.build('barobo');
 
     this.connect = function(uri, callback) {
-        self.ws_client = new WebSocketClient(uri);
-        self.ws_client.binaryType = "arraybuffer";
-        self.ws_client.onopen = function() {
+        _socket = new WebSocketClient(uri);
+        _socket.binaryType = "arraybuffer";
+        _socket.onopen = function() {
             function handshake() {
                 // Send ribbon-bridge connect message
                 connect_msg = new barobo.rpc.ClientMessage({
@@ -45,16 +46,16 @@ var RibbonBridge = function(protobufObj) {
                     'name':null, 
                     'cb': (function(obj) {}),
                 };
-                self.ws_client.send(connect_msg.toBuffer());
+                _socket.send(connect_msg.toBuffer());
                 _msgId += 1;
             }
             _callbacks['connect'] = callback;
             handshake();
         }
-        self.ws_client.onclose = function() {
+        _socket.onclose = function() {
             console.log('Connection closed.');
         }
-        self.ws_client.onmessage = function(message) {
+        _socket.onmessage = function(message) {
             console.log('ribbon-bridge received message.');
             serverMessage = barobo.rpc.ServerMessage.decode(message.data);
             if(
@@ -99,7 +100,7 @@ var RibbonBridge = function(protobufObj) {
         });
         _replyHandlers[_msgId] = {'name':rpcName, 'cb':callback};
         _msgId += 1;
-        self.ws_client.send(fire_msg.toBuffer());
+        _socket.send(fire_msg.toBuffer());
     }
 
     this.on = function(event_name, callback) {
