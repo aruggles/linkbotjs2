@@ -181,6 +181,70 @@ var RobotImpl = function() {
         });
     };
 
+    self.drive = function(a1, a2, a3, mask) {
+        return new Promise(function(resolve, reject) {
+            move_obj = {};
+            if(mask & 0x01) {
+                move_obj.motorOneGoal = 
+                    { 'type': robot_pb.Goal.Type.RELATIVE,
+                      'goal': a1,
+                      'controller' : robot_pb.Goal.Controller.PID
+                    };
+            }
+            if(mask & 0x02) {
+                move_obj.motorTwoGoal = 
+                    { 'type': robot_pb.Goal.Type.RELATIVE,
+                      'goal': a2,
+                      'controller' : robot_pb.Goal.Controller.PID
+                    };
+            }
+            if(mask & 0x04) {
+                move_obj.motorThreeGoal = 
+                    { 'type': robot_pb.Goal.Type.RELATIVE,
+                      'goal': a3,
+                      'controller' : robot_pb.Goal.Controller.PID
+                    };
+            }
+            _jointsMovingMask = mask&_motorMask;
+            util.timeout(self.proxy.move(move_obj, function(err, result) {
+                if(err) { reject(err); }
+                else { resolve(result); }
+            }), ROBOT_TIMEOUT);
+        });
+    }
+
+    self.driveTo = function(a1, a2, a3, mask) {
+        return new Promise(function(resolve, reject) {
+            move_obj = {};
+            if(mask & 0x01) {
+                move_obj.motorOneGoal = 
+                    { 'type': robot_pb.Goal.Type.ABSOLUTE,
+                      'goal': a1,
+                      'controller' : robot_pb.Goal.Controller.PID
+                    };
+            }
+            if(mask & 0x02) {
+                move_obj.motorTwoGoal = 
+                    { 'type': robot_pb.Goal.Type.ABSOLUTE,
+                      'goal': a2,
+                      'controller' : robot_pb.Goal.Controller.PID
+                    };
+            }
+            if(mask & 0x04) {
+                move_obj.motorThreeGoal = 
+                    { 'type': robot_pb.Goal.Type.ABSOLUTE,
+                      'goal': a3,
+                      'controller' : robot_pb.Goal.Controller.PID
+                    };
+            }
+            _jointsMovingMask = mask&_motorMask;
+            util.timeout(self.proxy.move(move_obj, function(err, result) {
+                if(err) { reject(err); }
+                else { resolve(result); }
+            }), ROBOT_TIMEOUT);
+        });
+    }
+
     self.getColor = function() {
         return new Promise(function(resolve, reject) {
             util.timeout(self.proxy.getLedColor( {}, function(err, result) {
