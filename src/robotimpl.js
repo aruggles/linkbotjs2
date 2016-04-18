@@ -5,6 +5,29 @@ var async = require('async');
 var util = require('./util.js');
 const assert = require('assert');
 
+function rgbToHex(value) {
+    if (!value || value === null || value === "undefined") {
+        return "00";
+    }
+    var val = Math.round(value);
+    val = val.toString(16);
+    if (val.length < 2) {
+        val = "0" + val;
+    }
+    return val;
+}
+
+function sign(value) {
+    return (value > 0) - (value < 0);
+}
+
+function colorToHex(color) {
+    var red = rgbToHex(color.red);
+    var green = rgbToHex(color.green);
+    var blue = rgbToHex(color.blue);
+    return red + green + blue;
+}
+
 var RobotImpl = function() {
     var self = this;
     var DAEMON_TIMEOUT = 5000;
@@ -48,6 +71,14 @@ var RobotImpl = function() {
     var _moveWaitCallbacks = [];
 
     self.on = function(name, callback) {
+        // Valid broadcast names are:
+        // 'buttonEvent',
+        // 'encoderEvent',
+        // 'accelerometerEvent',
+        // 'jointEvent',
+        // 'debugMessageEvent',
+        // 'connectionTerminated'
+
         _broadcastCallbacks[name] = callback;
     }
 
@@ -69,6 +100,17 @@ var RobotImpl = function() {
                 _moveWaitCallbacks.splice(i, 1);
             }
         }
+    }
+
+    self.color = function(r, g, b) {
+        return new Promise(function(resolve, reject) {
+            colorvalue = r<<16 | g<<8 | b;
+            color = {'value': colorvalue};
+            util.timeout(self.proxy.setLedColor(color, function(err, result) {
+                if(err) { reject(err); }
+                else { resolve(result); }
+            }), ROBOT_TIMEOUT);
+        });
     }
 
     self.connect = function(uri, serialId) {
@@ -138,6 +180,38 @@ var RobotImpl = function() {
             });
         });
     };
+
+    self.getColor = function() {
+        return new Promise(function(resolve, reject) {
+            util.timeout(self.proxy.getLedColor( {}, function(err, result) {
+                if(err) { reject(err); }
+                else {
+                    var value = result.value;
+                    color = {'red': value >> 16,
+                             'green': (value >> 8) & 0x00ff,
+                             'blue': value & 0x00ff
+                             };
+                    resolve(color);
+                }
+            }), ROBOT_TIMEOUT);
+        });
+    }
+
+    self.getHexColor = function() {
+        return new Promise(function(resolve, reject) {
+            util.timeout(self.proxy.getLedColor( {}, function(err, result) {
+                if(err) { reject(err); }
+                else {
+                    var color = {
+                        'red':result.value>>16,
+                        'green': (result.value>>8)&0x00ff,
+                        'blue':  (result.value)&0x00ff
+                        };
+                    resolve(colorToHex(color));
+                }
+            }), ROBOT_TIMEOUT);
+        });
+    }
 
     self.getJointAngles = function() {
         return new Promise(function(resolve, reject) {
