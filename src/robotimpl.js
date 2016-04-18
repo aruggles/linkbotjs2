@@ -224,6 +224,15 @@ var RobotImpl = function() {
         });
     }
 
+    self.getSpeeds = function() {
+        return new Promise(function(resolve, reject) {
+            util.timeout(self.proxy.getMotorControllerOmega({}, function(err, result) {
+                if ( err ) { reject(err); }
+                else { resolve(result.values); }
+            }), ROBOT_TIMEOUT);
+        });
+    }
+
     self.move = function(a1, a2, a3, mask) {
         return new Promise(function(resolve, reject) {
             move_obj = {};
@@ -309,6 +318,18 @@ var RobotImpl = function() {
                 }),
                 ROBOT_TIMEOUT
             );
+        });
+    }
+
+    self.speeds = function(s1, s2, s3, mask) {
+        return new Promise(function(resolve, reject) {
+            speed_obj = {};
+            speed_obj.mask = mask;
+            speed_obj.values = [s1, s2, s3];
+            util.timeout(self.proxy.setMotorControllerOmega(speed_obj, function(err, result) {
+                if ( err ) { reject(err); }
+                else { resolve(result); }
+            }), ROBOT_TIMEOUT);
         });
     }
 }
