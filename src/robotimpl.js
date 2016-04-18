@@ -261,6 +261,20 @@ var RobotImpl = function() {
         });
     }
 
+    self.getFormFactor = function() {
+        // Returns result:
+        // I = 0;
+        // L = 1;
+        // T = 2;
+        // DONGLE = 3;
+        return new Promise(function(resolve, reject) {
+            util.timeout(self.proxy.getFormFactor( {}, function(err, result) {
+                if(err) { reject(err); }
+                else { resolve(result.value); }
+            }), ROBOT_TIMEOUT);
+        });
+    }
+
     self.getHexColor = function() {
         return new Promise(function(resolve, reject) {
             util.timeout(self.proxy.getLedColor( {}, function(err, result) {
@@ -403,6 +417,19 @@ var RobotImpl = function() {
                             else { resolve(); }
                         }} );
             }
+        });
+    }
+
+    self.reset = function() {
+        // Reset the Linkbot's motor multi-rotation counters.
+        return new Promise(function(resolve, reject) {
+            util.timeout(
+                self.proxy.resetEncoderRevs({}, function(err, result) {
+                    if(err) { reject(err); }
+                    else { resolve(result); }
+                }),
+                ROBOT_TIMEOUT
+            );
         });
     }
 
