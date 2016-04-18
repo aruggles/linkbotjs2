@@ -1,17 +1,19 @@
-robotimpl = require('./src/robotimpl.js');
-async = require('async');
+<html>
+<head>
+<title>
+LinkbotJS Test
+</title>
+</head>
 
-var robot = new robotimpl.RobotImpl();
-var a = 90*3.14/180;
+<body>
+This is a test. Make sure you run "grunt" and that the file build/linkbot.js exists before you try loading this webpage.
+
+<script src="build/linkbot.js"> </script>
+<script>
+var robot = new RobotImpl();
 
 robot.connect('ws://localhost:42000', 'DGKR').then(function() {
     return robot.moveJoints(1, 1, -1, 7);
-}).then(function() {
-    return new Promise(function(resolve, reject) {
-        setTimeout(resolve, 3000);
-    });
-}).then(function() {
-    return robot.moveJoints(-1, -1, -1, 7);
 }).then(function() {
     return new Promise(function(resolve, reject) {
         setTimeout(resolve, 3000);
@@ -22,4 +24,7 @@ robot.connect('ws://localhost:42000', 'DGKR').then(function() {
     console.log('Error!');
     console.log(err);
 });
+</script>
+</body>
 
+</html>
