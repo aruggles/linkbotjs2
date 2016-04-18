@@ -326,6 +326,39 @@ var RobotImpl = function() {
         });
     }
 
+    self.moveJoints = function(c1, c2, c3, mask) {
+        // Begin moving a robot's joints indefinitely. c1, c2, and c3 are joint
+        // motion coefficients. Setting a coefficient to 1 begins moving the
+        // joint at maximum forward velocity, and -1 at maximum backward
+        // velocity.
+        return new Promise(function(resolve, reject) {
+            move_obj = {};
+            if(mask & 0x01) {
+                move_obj.motorOneGoal = 
+                    { 'type': robot_pb.Goal.Type.INFINITE,
+                      'goal': c1,
+                    };
+            }
+            if(mask & 0x02) {
+                move_obj.motorTwoGoal = 
+                    { 'type': robot_pb.Goal.Type.INFINITE,
+                      'goal': c2,
+                    };
+            }
+            if(mask & 0x04) {
+                move_obj.motorThreeGoal = 
+                    { 'type': robot_pb.Goal.Type.INFINITE,
+                      'goal': c3,
+                    };
+            }
+            _jointsMovingMask = mask&_motorMask;
+            util.timeout(self.proxy.move(move_obj, function(err, result) {
+                if(err) { reject(err); }
+                else { resolve(result); }
+            }), ROBOT_TIMEOUT);
+        });
+    }
+
     self.moveTo = function(a1, a2, a3, mask) {
         return new Promise(function(resolve, reject) {
             move_obj = {};
@@ -394,6 +427,18 @@ var RobotImpl = function() {
                 if ( err ) { reject(err); }
                 else { resolve(result); }
             }), ROBOT_TIMEOUT);
+        });
+    }
+
+    self.stop = function() {
+        return new Promise(function(resolve, reject) {
+            util.timeout(
+                self.proxy.stop({}, function(err, result) {
+                    if(err) { reject(err); }
+                    else { resolve(result); }
+                }),
+                ROBOT_TIMEOUT
+            );
         });
     }
 }
