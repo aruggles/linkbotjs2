@@ -1,0 +1,12 @@
+To run the demos, you will need npm and grunt. Also, you may need to create a
+symlink of the directory src/proto in the root directory of this project. Then,
+you may run the tests and demos like so::
+
+    node moveJointsTest.js
+
+To run the browser demo, start a simple webserver in the root directory of the
+project::
+
+    python3 -m http.server
+
+
