@@ -8,6 +8,7 @@
         "grunt-browserify": "~5.0.0",
         "grunt-contrib-watch":"latest",
         "websocket":"latest",
-	"protobufjs":"latest"
+	"protobufjs":"latest",
+    "promise":"latest"
     }
 }

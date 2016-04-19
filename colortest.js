@@ -1,7 +1,7 @@
 robotimpl = require('./src/robotimpl.js');
 async = require('async');
 
-var robot = new robotimpl.RobotImpl();
+var robot = new robotimpl.Linkbot();
 var a = 90*3.14/180;
 
 robot.connect('ws://localhost:42000', 'DGKR').then(function() {

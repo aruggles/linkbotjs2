@@ -1,6 +1,10 @@
-To run the demos, you will need npm and grunt. Also, you may need to create a
-symlink of the directory src/proto in the root directory of this project. Then,
-you may run the tests and demos like so::
+To build the project, do::
+
+    npm install
+    grunt
+
+Also, you may need to create a symlink of the directory src/proto in the root
+directory of this project. Then, you may run the tests and demos like so::
 
     node moveJointsTest.js
 
