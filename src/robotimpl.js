@@ -3,6 +3,7 @@ var RibbonBridge = require('./ribbon-bridge.js');
 var daemon_module = require('./daemon.js');
 var async = require('async');
 var util = require('./util.js');
+var Promise = require('promise');
 const assert = require('assert');
 
 function rgbToHex(value) {
@@ -480,5 +481,6 @@ var RobotImpl = function() {
 }
 
 module.exports.RobotImpl = RobotImpl;
+module.exports.Linkbot = RobotImpl;
 global.RobotImpl = RobotImpl;
 global.Linkbot = RobotImpl;

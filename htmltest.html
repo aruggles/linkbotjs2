@@ -10,7 +10,7 @@ This is a test. Make sure you run "grunt" and that the file build/linkbot.js exi
 
 <script src="build/linkbot.js"> </script>
 <script>
-var robot = new RobotImpl();
+var robot = new Linkbot();
 
 robot.connect('ws://localhost:42000', 'DGKR').then(function() {
     return robot.moveJoints(1, 1, -1, 7);

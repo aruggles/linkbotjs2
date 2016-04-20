@@ -1,3 +1,24 @@
+// ribbon-bridge.js
+//
+// This module creates javascript ribbon bridge proxy objects from protobuf
+// files that contain ribbon-bridge compliant messages. Read more about
+// ribbon-bridge at https://github.com/BaroboRobotics/ribbon-bridge .
+//
+// Sample usage:
+//
+//    var ProtoBuf = require('protobufjs');
+//    var RibbonBridge = require('./ribbon-bridge.js');
+//
+//    var builder = ProtoBuf.loadProtoFile('./proto/daemon.proto');
+//    var daemon_pb = builder.build('barobo.Daemon');
+//    var proxy = new RibbonBridge.RibbonBridge(daemon_pb);
+//
+//    proxy.connect(uri, function(err, reply) { });
+//
+//    // Call RPC functions defined in .proto files
+//    proxy.resolveSerialId({'serialId':{'value':'DGKR'}},
+//        function(err, reply) { } );
+//
 const assert = require('assert');
 
 // hash function
@@ -31,6 +52,11 @@ var RibbonBridge = function(protobufObj) {
     barobo = builder.build('barobo');
 
     this.connect = function(uri, callback) {
+        // Connect to a ribbon-bridge server. The uri should be a websocket,
+        // something like ws://hostname.com:42000 
+        // The completion callback is called as such::
+        //     callback(err, proxy)
+        // where 'proxy' is a ribbon-bridge proxy object if there is no error.
         _socket = new WebSocketClient(uri);
         _socket.binaryType = "arraybuffer";
         _socket.onopen = function() {
@@ -87,6 +113,8 @@ var RibbonBridge = function(protobufObj) {
     }
 
     this.fire = function(rpcName, payload, callback) {
+        // This is a helper function. You should not need to call this function
+        // directly.
         console.log('Fire: ' + rpcName);
         fire_msg = new barobo.rpc.ClientMessage({
             'id':_msgId,
@@ -104,6 +132,7 @@ var RibbonBridge = function(protobufObj) {
     }
 
     this.on = function(event_name, callback) {
+        // Register a callback function to handle ribbon-bridge "events".
         assert( _valid_callbacks.indexOf(event_name) >= 0 );
         _callbacks[event_name] = callback;
     }
