@@ -311,6 +311,15 @@ var RobotImpl = function() {
         });
     }
 
+    self.getVersion = function() {
+        return new Promise(function(resolve, reject) {
+            util.timeout(self.proxy.getFirmwareVersion({}, function(err, result) {
+                if ( err ) { reject(err); }
+                else { resolve(result); }
+            }), ROBOT_TIMEOUT);
+        });
+    }
+
     self.move = function(a1, a2, a3, mask) {
         return new Promise(function(resolve, reject) {
             move_obj = {};

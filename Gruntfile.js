@@ -12,7 +12,7 @@ module.exports = function(grunt) {
     browserify: {
         main: {
             src: 'src/robotimpl.js',
-            dest: 'build/linkbot.js'
+            dest: 'dist/linkbot.js'
         }
     },
     watch: {
