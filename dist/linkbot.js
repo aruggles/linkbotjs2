@@ -16714,12 +16714,16 @@ var RobotImpl = function() {
     }
 
     self.color = function(r, g, b) {
+        console.log('Setting robot color...');
         return new Promise(function(resolve, reject) {
             colorvalue = r<<16 | g<<8 | b;
             color = {'value': colorvalue};
             util.timeout(self.proxy.setLedColor(color, function(err, result) {
                 if(err) { reject(err); }
-                else { resolve(result); }
+                else { 
+                    console.log('Done setting robot color.');
+                    resolve(result); 
+                }
             }), ROBOT_TIMEOUT);
         });
     }
