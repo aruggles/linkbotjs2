@@ -174,6 +174,7 @@ var RobotImpl = function() {
             ], function(err, result) {
                 if(!err) {
                     self.proxy = result;
+                    console.log('Robot connection established.');
                     resolve(self);
                 } else {
                     reject(err);
