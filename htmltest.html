@@ -12,7 +12,7 @@ This is a test. Make sure you run "grunt" and that the file build/linkbot.js exi
 <script>
 var robot = new Linkbot();
 
-robot.connect('ws://localhost:42000', 'DGKR').then(function() {
+robot.connect('ws://localhost:42000', 'CBPS').then(function() {
     return robot.moveJoints(1, 1, -1, 7);
 }).then(function() {
     return new Promise(function(resolve, reject) {

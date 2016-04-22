@@ -2,9 +2,10 @@ module.exports = function(grunt) {
 
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-browserify');
+  grunt.loadNpmTasks('grunt-contrib-copy');
 
   // Default task(s).
-  grunt.registerTask('default', ['browserify', 'watch']);
+  grunt.registerTask('default', ['browserify', 'copy']);
 
   // Project configuration.
   grunt.initConfig({
@@ -15,9 +16,12 @@ module.exports = function(grunt) {
             dest: 'dist/linkbot.js'
         }
     },
-    watch: {
-        files: 'src/*',
-        tasks: ['default']
+    copy: {
+        main: {
+            files: [
+                {expand: true, cwd: 'src/proto/', src: ['*'], dest: 'dist/proto/', filter: 'isFile'},
+            ],
+        },
     }
   });
 };
