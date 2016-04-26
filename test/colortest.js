@@ -1,4 +1,4 @@
-robotimpl = require('./src/robotimpl.js');
+robotimpl = require('./../src/js/robotimpl.js');
 async = require('async');
 
 var robot = new robotimpl.Linkbot();

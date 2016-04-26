@@ -1,15 +1,33 @@
 {
-    "name": "linkbot-js",
-    "version": "0.0.1",
-    "devDependencies": {
-	"async": "latest",
-        "grunt": "~0.4.5",
-        "browserify": "latest",
-        "grunt-browserify": "~5.0.0",
-        "grunt-contrib-watch":"latest",
-        "grunt-contrib-copy":"latest",
-        "websocket":"latest",
-	"protobufjs":"latest",
-    "promise":"latest"
-    }
+  "name": "linkbot-js",
+  "description": "Javascript API for interacting with Barobo robots",
+  "version": "2.0.1",
+  "author": "Barobo, Inc.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BaroboRobotics/linkbotjs2"
+  },
+  "bugs": {
+    "url": "https://github.com/BaroboRobotics/linkbotjs2/issues"
+  },
+  "devDependencies": {
+    "async": "latest",
+    "browserify": "latest",
+    "deep-equal": "^1.0.1",
+    "grunt": "~0.4.5",
+    "grunt-browserify": "~5.0.0",
+    "grunt-contrib-copy": "latest",
+    "grunt-contrib-jshint": "^1.0.0",
+    "grunt-contrib-jshint-jsx": "^0.10.4",
+    "grunt-contrib-less": "^1.3.0",
+    "grunt-contrib-uglify": "^1.0.1",
+    "grunt-contrib-watch": "latest",
+    "promise": "latest",
+    "protobufjs": "latest",
+    "react": "^15.0.1",
+    "react-dom": "^15.0.1",
+    "reactify": "^1.1.1",
+    "websocket": "latest"
+  }
 }

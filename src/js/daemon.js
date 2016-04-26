@@ -1,3 +1,5 @@
+"use strict";
+
 var connect = (function() {
     var ProtoBuf = require('protobufjs');
     var RibbonBridge = require('./ribbon-bridge.js');
